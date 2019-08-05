@@ -41,8 +41,6 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
 # app.config['MONGODB_DB'] = 'bucket_uploader_test'
 app.config.from_pyfile('config.py')
 db = MongoEngine(app)
-UPLOAD_FOLDER =  os.path.abspath('upload')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 celery = make_celery(app)
 
@@ -159,7 +157,7 @@ def make_google_request(source, sink, project_id, files, schedule_time):
   return transfer_job
 
 def upload_to_google(files, sink_bucket, transfer_job):
-  credential_file_path = os.path.abspath(f'sink_credential_{sink_bucket.name}.json')
+  credential_file_path = os.path.abspath(f'/tmp/sink_credential_{sink_bucket.name}.json')
   credential_file = open(credential_file_path, 'w')
   credential_file.write(sink_bucket.credentials)
   credential_file.close()
@@ -187,11 +185,11 @@ def start_transfer(source, sink, files):
       type=('S3' if sink.bucket_type == 'Amazon S3' else 'GCS')
     )
     try:
-      credential_file_path = f'sink_credential_{sink.name}.json'
+      credential_file_path = os.path.abspath(f'tmp/sink_credential_{sink_bucket.name}.json')
       credential_file = open(credential_file_path, 'w')
       credential_file.write(sink.credentials)
       credential_file.close()
-      os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.abspath(credential_file_path)
+      os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
       # print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
       storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1', cache_discovery=False)
       print('before making transfer')

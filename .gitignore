@@ -3,5 +3,5 @@ venv
 __pycache__
 node_modules
 .env
-upload/*
-!upload/.gitkeep
+tmp/*
+!tmp/.gitkeep
