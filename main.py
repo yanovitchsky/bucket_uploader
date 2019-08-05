@@ -347,6 +347,7 @@ def upload_file():
       app.logger.info('file name is %s',name)
       file.save(name)
       file_list.append(name)
+      raise ValueError(file_list)
     local_file_upload.delay(bucket_id, file_list)
     return jsonify({'success': True})
   else:
