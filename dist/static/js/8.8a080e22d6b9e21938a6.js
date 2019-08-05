@@ -1,0 +1,2 @@
+webpackJsonp([8],{OrM6:function(e,n,l){"use strict";var r=function(){var e=this,n=e.$createElement;return(e._self._c||n)("div",[e._v("\n  Hello world\n")])},t=[],u={render:r,staticRenderFns:t};n.a=u},lO7g:function(e,n,l){"use strict";Object.defineProperty(n,"__esModule",{value:!0});var r=l("OrM6"),t=l("VU/8"),u=t(null,r.a,!1,null,null,null);n.default=u.exports}});
+//# sourceMappingURL=8.8a080e22d6b9e21938a6.js.map
