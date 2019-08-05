@@ -157,7 +157,8 @@ def make_google_request(source, sink, project_id, files, schedule_time):
   return transfer_job
 
 def upload_to_google(files, sink_bucket, transfer_job):
-  credential_file_path = os.path.abspath(f'/tmp/sink_credential_{sink_bucket.name}.json')
+  upload_folder = os.path.abspath(os.environ.get('UPLOAD_FOLDER'))
+  credential_file_path = os.path.abspath(f'{upload_folder}/sink_credential_{sink_bucket.name}.json')
   credential_file = open(credential_file_path, 'w')
   credential_file.write(sink_bucket.credentials)
   credential_file.close()
@@ -184,25 +185,26 @@ def start_transfer(source, sink, files):
       schedule=now,
       type=('S3' if sink.bucket_type == 'Amazon S3' else 'GCS')
     )
-    try:
-      credential_file_path = os.path.abspath(f'tmp/sink_credential_{sink_bucket.name}.json')
-      credential_file = open(credential_file_path, 'w')
-      credential_file.write(sink.credentials)
-      credential_file.close()
-      os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
-      # print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-      storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1', cache_discovery=False)
-      print('before making transfer')
-      transfer_job = make_aws_request(source, sink, sink.project_id, files, now) if source.bucket_type == 'Amazon S3' else make_google_request(source, sink, sink.project_id, files, now)
-      result = storagetransfer.transferJobs().create(body=transfer_job).execute()
-      tj.name = result['name']
-      tj.success = True
-      return tj.save()
-    except:
-      e = sys.exc_info()[0]
-      print(f'error => {e}')
-      tj.success = False
-      return tj.save()
+    upload_folder = os.path.abspath(os.environ.get('UPLOAD_FOLDER'))
+    # try:
+    credential_file_path = os.path.abspath(f'{upload_folder}/sink_credential_{sink.bucket.name}.json')
+    credential_file = open(credential_file_path, 'w')
+    credential_file.write(sink.credentials)
+    credential_file.close()
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
+    # print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+    storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1', cache_discovery=False)
+    print('before making transfer')
+    transfer_job = make_aws_request(source, sink, sink.project_id, files, now) if source.bucket_type == 'Amazon S3' else make_google_request(source, sink, sink.project_id, files, now)
+    result = storagetransfer.transferJobs().create(body=transfer_job).execute()
+    tj.name = result['name']
+    tj.success = True
+    return tj.save()
+    # except:
+    #   e = sys.exc_info()[0]
+    #   print(f'error => {e}')
+    #   tj.success = False
+    #   return tj.save()
 
 def s3_files(bucket):
   session = Session(aws_access_key_id=bucket.aws_access_key, aws_secret_access_key=bucket.aws_secret_key)
