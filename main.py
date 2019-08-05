@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from boto3.session import Session
 from bson import ObjectId
 from celery import Celery
+from flask_htpasswd import HtPasswdAuth
 
 #Configuration
 app = Flask(__name__, 
@@ -28,6 +29,9 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
+
+print(app.config['FLASK_HTPASSWD_PATH'])
+htpasswd = HtPasswdAuth(app)
 
 # models
 BUCKET_TYPE = ('Amazon S3', 'Google Storage')
@@ -357,7 +361,8 @@ def not_found(error=None):
   return resp
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def catch_all(path):
+@htpasswd.required
+def catch_all(path, user):
   if app.debug:
     return requests.get('http://localhost:8080/{}'.format(path)).text
   else:
