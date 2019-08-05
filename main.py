@@ -342,6 +342,7 @@ def upload_file():
     for file in files:
       filename = secure_filename(file.filename)
       name = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+      print(name)
       file.save(name)
       file_list.append(name)
     local_file_upload.delay(bucket_id, file_list)
