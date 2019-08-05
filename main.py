@@ -16,6 +16,23 @@ from bson import ObjectId
 from celery import Celery
 from flask_htpasswd import HtPasswdAuth
 
+
+def make_celery(app):
+    celery = Celery(
+        app.import_name,
+        backend=app.config['CELERY_RESULT_BACKEND'],
+        broker=app.config['CELERY_BROKER_URL']
+    )
+    celery.conf.update(app.config)
+
+    class ContextTask(celery.Task):
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return self.run(*args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
+
 #Configuration
 app = Flask(__name__, 
   static_folder = "./dist/static",
@@ -27,8 +44,7 @@ db = MongoEngine(app)
 UPLOAD_FOLDER =  os.path.abspath('upload')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-celery.conf.update(app.config)
+celery = make_celery(app)
 
 print(app.config['FLASK_HTPASSWD_PATH'])
 htpasswd = HtPasswdAuth(app)
@@ -49,7 +65,7 @@ class Bucket(db.Document):
 class TransferJob(db.Document):
   name = db.StringField(required=True)
   project_id = db.StringField(required=True)
-  success = db.BooleanField()
+  success = db.BooleanField(default=False)
   files = db.ListField(db.StringField())
   source = db.ReferenceField(Bucket)
   sink = db.ReferenceField(Bucket)
@@ -330,21 +346,18 @@ def get_transfer_status(transfer_id):
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-  try:
-    bucket_id = request.form['bucket_id']
-    file_list = []
-    if 'files' in request.files :
-      files = request.files.getlist('files')
-      for file in files:
-        filename = secure_filename(file.filename)
-        name = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(name)
-        file_list.append(name)
-      local_file_upload.delay(bucket_id, file_list)
-      return jsonify({'success': True})
-    else:
-      return jsonify({'error': True}), 500
-  except:
+  bucket_id = request.form['bucket_id']
+  file_list = []
+  if 'files' in request.files :
+    files = request.files.getlist('files')
+    for file in files:
+      filename = secure_filename(file.filename)
+      name = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+      file.save(name)
+      file_list.append(name)
+    local_file_upload.delay(bucket_id, file_list)
+    return jsonify({'success': True})
+  else:
     return jsonify({'error': True}), 500
 
 
@@ -363,10 +376,10 @@ def not_found(error=None):
 @app.route('/<path:path>')
 @htpasswd.required
 def catch_all(path, user):
-  if app.debug:
-    return requests.get('http://localhost:8080/{}'.format(path)).text
-  else:
-    return render_template('index.html')
+  # if app.debug:
+  #   return requests.get('http://localhost:8080/{}'.format(path)).text
+  # else:
+  return render_template('index.html')
 
 @celery.task
 # @route.add('/queues/upload', methods=['POST'])
@@ -381,16 +394,11 @@ def local_file_upload(bucket_id, files):
     schedule=datetime.now(),
     type='LOCAL'
   )
-  try:
-    new_pid = os.fork()
-    if new_pid == 0:
-      upload_to_google(files, bucket, tj)
-    os.waitpid(new_pid,0)
-    return True
-  except:
-    tj.success = False
-    tj.save()
-    return False
+  new_pid = os.fork()
+  if new_pid == 0:
+    upload_to_google(files, bucket, tj)
+  os.waitpid(new_pid,0)
+  return True
 
 @celery.task
 # @app.route('/queues/transfer', methods=['POST'])
