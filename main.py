@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 from boto3.session import Session
 from bson import ObjectId
 from celery import Celery
-from flask_htpasswd import HtPasswdAuth
+# from flask_htpasswd import HtPasswdAuth
 
 
 def make_celery(app):
@@ -38,14 +38,11 @@ app = Flask(__name__,
   static_folder = "./dist/static",
   template_folder = "./dist")
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
-# app.config['MONGODB_DB'] = 'bucket_uploader_test'
 app.config.from_pyfile('config.py')
 db = MongoEngine(app)
 
 celery = make_celery(app)
-
-print(app.config['FLASK_HTPASSWD_PATH'])
-htpasswd = HtPasswdAuth(app)
+# htpasswd = HtPasswdAuth(app)
 
 # models
 BUCKET_TYPE = ('Amazon S3', 'Google Storage')
@@ -78,7 +75,7 @@ def can_delete(bucket):
 
 def make_aws_request(source, sink, project_id, files, schedule_time):
   now = schedule_time
-  description = f'{source.name}_{now.day}_{now.month}_{now.year}'
+  description = f'{source.name}_{now.day}_{now.month}_{now.year}_{datetime.timestamp(now)}'
   transfer_job = {
     'description': description,
     'status': 'ENABLED',
@@ -120,7 +117,7 @@ def make_aws_request(source, sink, project_id, files, schedule_time):
 
 def make_google_request(source, sink, project_id, files, schedule_time):
   now = schedule_time
-  description = f'{source.name}_{now.day}_{now.month}_{now.year}'
+  description = f'{source.name}_{now.day}_{now.month}_{now.year}_{datetime.timestamp(now)}'
   transfer_job = {
     'description': description,
     'status': 'ENABLED',
@@ -192,13 +189,13 @@ def start_transfer(source, sink, files):
     credential_file.write(sink.credentials)
     credential_file.close()
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
-    # print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-    storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1', cache_discovery=False)
+    storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1')
     print('before making transfer')
     transfer_job = make_aws_request(source, sink, sink.project_id, files, now) if source.bucket_type == 'Amazon S3' else make_google_request(source, sink, sink.project_id, files, now)
     result = storagetransfer.transferJobs().create(body=transfer_job).execute()
     tj.name = result['name']
     tj.success = True
+    print('after')
     return tj.save()
     # except:
     #   e = sys.exc_info()[0]
@@ -309,7 +306,7 @@ def transfer_bucket():
   source_id = params['sourceId']
   sink_id = params['sinkId']
   files = params['files']
-  transfer_job.delay(source_id, sink_id, files)
+  transfer_job(source_id, sink_id, files)
   return jsonify({"success": True})
 
 @app.route('/api/transfers/<transfer_id>/status', methods=['GET'])
@@ -348,7 +345,7 @@ def upload_file():
       file.save(name)
       file_list.append(name)
 
-    local_file_upload.delay(bucket_id, file_list)
+    local_file_upload(bucket_id, file_list)
     return jsonify({'success': True})
   else:
     return jsonify({'error': True}), 500
@@ -367,15 +364,14 @@ def not_found(error=None):
   return resp
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-@htpasswd.required
-def catch_all(path, user):
+# @htpasswd.required
+def catch_all(path):
   # if app.debug:
   #   return requests.get('http://localhost:8080/{}'.format(path)).text
   # else:
   return render_template('index.html')
 
 @celery.task
-# @route.add('/queues/upload', methods=['POST'])
 def local_file_upload(bucket_id, files):
   bucket = Bucket.objects.get(id=bucket_id)
   timestamp = datetime.timestamp(datetime.now())
@@ -391,7 +387,6 @@ def local_file_upload(bucket_id, files):
   return True
 
 @celery.task
-# @app.route('/queues/transfer', methods=['POST'])
 def transfer_job(source_id, sink_id, files):
   source = Bucket.objects(id=source_id).first()
   sink = Bucket.objects(id=sink_id).first()

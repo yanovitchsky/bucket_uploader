@@ -1,4 +1,7 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
+
 MONGODB_SETTINGS = {
   'host': os.environ.get('MONGO_URL'),
   'db': os.environ.get('MONGO_DB')
