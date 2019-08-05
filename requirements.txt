@@ -9,3 +9,6 @@ Werkzeug==0.15
 flask-mongoengine
 google-cloud-storage
 google-api-python-client
+boto3
+celery
+redis

@@ -2,12 +2,23 @@
   <a-layout id="app">
     <Header>
       <a-menu mode='horizontal'>
-        <a-menu-item>Buckets</a-menu-item>
-        <a-menu-item>Jobs</a-menu-item>
+        <a-menu-item>
+          <router-link to='/'>Buckets</router-link>
+        </a-menu-item>
+        <a-menu-item>
+          <router-link to='/transfers'>Transfers</router-link>
+        </a-menu-item>
+        <a-menu-item>
+          <router-link to="/uploads">Uploads</router-link>
+        </a-menu-item>
       </a-menu>
     </Header>
     <Content class='content'>
-      <router-view/>
+      <a-row>
+        <a-col :span="24">
+          <router-view class='content-inside'/>
+        </a-col>
+      </a-row>
     </Content>
     <Footer></Footer>
   </a-layout>
@@ -36,5 +47,8 @@ export default {
   margin-top: 64px;
   min-height: 380px;
   text-align: center;
+}
+.content-inside {
+  display: inline-block
 }
 </style>

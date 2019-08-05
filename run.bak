@@ -1,0 +1,79 @@
+#
+# # models
+# BUCKET_TYPE = ('Amazon S3', 'Google Storage')
+# class Bucket(db.Document):
+#   name = db.StringField(required=True, max_length=120)
+#   aws_access_key = db.StringField(max_length=120)
+#   aws_secret_key = db.StringField(max_length=120)
+#   credentials = db.StringField(max_length=500)
+#   bucket_type = db.StringField(required=True, max_length=20, choices=BUCKET_TYPE)
+
+# class TransferJob(db.Document):
+#   job_id: db.StringField(required=True)
+#   project_id = db.StringField(required=True)
+#   files = db.ListField(db.StringField())
+#   source = db.ReferenceField(Bucket)
+#   sink = db.ReferenceField(Bucket)
+#
+#
+# # Utilities functions
+# def upload_to_google(files, sink_bucket):
+#   credential_file_path = f'sink_credential_{sink_bucket.name}.json'
+#   credential_file = open(credential_file_path, 'w')
+#   credential_file.write(sink_bucket.credentials)
+#   os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
+#   client = storage.Client()
+#   bucket = client.get_bucket(sink_bucket.name)
+#   for file in files:
+#     filename = file.split('/')[-1]
+#     blob = bucket.blob(filename)
+#     blob.upload_from_filename(filename=file)
+#     os.remove(file)
+#   os.remove(credential_file_path)
+#
+#
+# # routes
+# @app.errorhandler(404)
+# def not_found(error):
+#   return make_response(jsonify({'error': 'Not found'}), 404)
+
+# # CRUD buckets
+# @app.route('/api/buckets', methods = ['GET'])
+# def get_buckets():
+#   buckets = Bucket.objects.all()
+#   return jsonify({"buckets": buckets})
+
+# @app.route('/api/buckets', methods = ['POST'])
+# def create_bucket():
+#   if not request.json:
+#     abort(404)
+#   bucket = Bucket(request.json)
+#   bucket.save()
+#   return jsonify({"bucket": bucket}), 201
+
+# @app.route('/api/transfer/')
+# def transfer():
+#   if not request.json:
+#     abort(404)
+#   bucket = Bucket.objects(type='Google Storage').first()
+#   files ['/Users/yannakoun/Downloads/procedure.pdf', '/Users/yannakoun/Downloads/nginx.conf']
+#   new_pid = os.fork()
+#   if new_pid == 0:
+#     upload_to_google(files=files, sink_bucket=bucket)
+#   response = {"success": True}
+#   return jsonify(response)
+#
+# @app.route('/api/random')
+# def random_number():
+#   response = {
+#     "randomNumber": randint(1, 100)
+#   }
+#   return jsonify(response)
+#
+# @app.route('/', defaults={'path': ''})
+# @app.route('/<path:path>')
+# def catch_all(path):
+#   if app.debug:
+#     return requests.get('http://localhost:8080/{}'.format(path)).text
+#   else:
+#     return render_template('index.html')
