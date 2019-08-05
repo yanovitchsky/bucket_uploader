@@ -1,0 +1,15 @@
+runtime: python27
+api_version: 1
+threadsafe: true
+service: worker
+skip_files:
+  - frontend
+  - node_modules
+  - .git
+handlers:
+- url: /queues/transfer
+  script: main.app
+  login: admin
+- url: /queues/upload
+  script: main.app
+  login: admin
