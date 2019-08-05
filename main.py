@@ -160,11 +160,11 @@ def make_google_request(source, sink, project_id, files, schedule_time):
 
 def upload_to_google(files, sink_bucket, transfer_job):
   try:
-    credential_file_path = f'sink_credential_{sink_bucket.name}.json'
+    credential_file_path = os.path.abspath(f'sink_credential_{sink_bucket.name}.json')
     credential_file = open(credential_file_path, 'w')
     credential_file.write(sink_bucket.credentials)
     credential_file.close()
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.abspath(credential_file_path)
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
     print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
     client = storage.Client()
     bucket = client.get_bucket(sink_bucket.name)
