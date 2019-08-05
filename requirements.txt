@@ -14,3 +14,4 @@ celery
 redis
 dnspython
 gunicorn==19.3.0
+python-dotenv

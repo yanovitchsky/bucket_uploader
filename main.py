@@ -13,9 +13,7 @@ import googleapiclient.discovery
 from werkzeug.utils import secure_filename
 from boto3.session import Session
 from bson import ObjectId
-# from celery import Celery
-from google.api import taskqueue
-
+from celery import Celery
 
 #Configuration
 app = Flask(__name__, 
@@ -28,11 +26,8 @@ db = MongoEngine(app)
 UPLOAD_FOLDER =  os.path.abspath('upload')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-# app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
-
-# celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
-# celery.conf.update(app.config)
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 # models
 BUCKET_TYPE = ('Amazon S3', 'Google Storage')
@@ -303,17 +298,7 @@ def transfer_bucket():
   source_id = params['sourceId']
   sink_id = params['sinkId']
   files = params['files']
-  # transfer_job.delay(source_id, sink_id, files)
-  taskqueue.add(
-    url='/queues/transfer',
-    name='transfer buckets',
-    method='POST',
-    params= {
-      'source_id': source_id,
-      'sink_id': sink_id,
-      'files': files
-    }
-  )
+  transfer_job.delay(source_id, sink_id, files)
   return jsonify({"success": True})
 
 @app.route('/api/transfers/<transfer_id>/status', methods=['GET'])
@@ -341,7 +326,7 @@ def get_transfer_status(transfer_id):
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-  # try:
+  try:
     bucket_id = request.form['bucket_id']
     file_list = []
     if 'files' in request.files :
@@ -351,23 +336,12 @@ def upload_file():
         name = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(name)
         file_list.append(name)
-      # local_file_upload.delay(bucket_id, file_list)
-      taskqueue.add(
-        url='/queues/upload',
-        name='upload files',
-        method='POST',
-        params= {
-          'bucket_id': bucket_id,
-          'files': file_list
-        }
-      )
+      local_file_upload.delay(bucket_id, file_list)
       return jsonify({'success': True})
     else:
       return jsonify({'error': True}), 500
-  # except:
-    # e = sys.exc_info()[0]
-    # print(e)
-    # return jsonify({'error': True}), 500
+  except:
+    return jsonify({'error': True}), 500
 
 
 
@@ -389,11 +363,9 @@ def catch_all(path):
   else:
     return render_template('index.html')
 
-# @celery.task
-@route.add('/queues/upload', methods=['POST'])
-def upload():
-  bucket_id = request.form('bucket_id')
-  files = request.form('files')
+@celery.task
+# @route.add('/queues/upload', methods=['POST'])
+def local_file_upload(bucket_id, files):
   bucket = Bucket.objects.get(id=bucket_id)
   timestamp = datetime.timestamp(datetime.now())
   tj = TransferJob(
@@ -415,19 +387,16 @@ def upload():
     tj.save()
     return False
 
-# @celery.task
-@app.route('/queues/transfer', methods=['POST'])
-def transfer():
-  source_id = request.form('source_id')
-  sink_id =  request.form('sink_id')
-  files =  request.form('files')
+@celery.task
+# @app.route('/queues/transfer', methods=['POST'])
+def transfer_job(source_id, sink_id, files):
   new_pid = os.fork()
   if new_pid == 0:
     source = Bucket.objects(id=source_id).first()
     sink = Bucket.objects(id=sink_id).first()
     start_transfer(source, sink, files)
   os.waitpid(new_pid,0)
-  return jsonify({'success': True})
+  return True
 
   if __name__ == "__main__":
     app.run(host='0.0.0.0')
