@@ -73,7 +73,7 @@ export default {
   methods: {
     async getBuckets () {
       try {
-        const path = `http://localhost:5000/api/buckets`
+        const path = '/api/buckets'
         const response = await axios.get(path)
         this.buckets = response.data.buckets
       } catch (error) {
@@ -95,7 +95,7 @@ export default {
     },
     async createTransfer () {
       try {
-        const path = `http://localhost:5000/api/transfers`
+        const path = `/api/transfers`
         const files = this.selectedFiles.map(x => x.name)
         const params = {
           sourceId: this.source.id,
@@ -111,7 +111,7 @@ export default {
     },
     async getFiles (bucketId) {
       try {
-        const path = `http://localhost:5000/api/buckets/${bucketId}/files`
+        const path = `/api/buckets/${bucketId}/files`
         const response = await axios.get(path)
         this.sourceFiles = response.data.files
       } catch (error) {

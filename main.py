@@ -20,7 +20,8 @@ app = Flask(__name__,
   static_folder = "./dist/static",
   template_folder = "./dist")
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
-app.config['MONGODB_DB'] = 'bucket_uploader_test'
+# app.config['MONGODB_DB'] = 'bucket_uploader_test'
+app.config.from_pyfile('config.py')
 db = MongoEngine(app)
 UPLOAD_FOLDER =  os.path.abspath('upload')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -397,3 +398,6 @@ def transfer_job(source_id, sink_id, files):
     start_transfer(source, sink, files)
   os.waitpid(new_pid,0)
   return True
+
+  if __name__ == "__main__":
+    app.run(host='0.0.0.0')

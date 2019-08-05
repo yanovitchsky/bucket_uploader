@@ -88,7 +88,7 @@ export default {
       this.form.validateFields((err, values) => {
         if (!err) {
           console.log('Received values of form: ', values)
-          const path = `http://localhost:5000/api/buckets`
+          const path = `/api/buckets`
           axios.post(path, values)
           .then(response => {
             this.$router.push('/')

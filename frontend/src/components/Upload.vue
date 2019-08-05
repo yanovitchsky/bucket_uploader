@@ -75,7 +75,7 @@ export default {
       formData.append('bucket_id', this.selectedBucket.id)
       this.uploading = true
       try {
-        const path = 'http://localhost:5000/api/upload'
+        const path = '/api/upload'
         await axios.post(path, formData, {headers: {'Content-Type': 'multipart/form-data'}})
         this.fileList = []
         this.uploading = false
@@ -88,7 +88,7 @@ export default {
     },
     async getBuckets () {
       try {
-        const path = `http://localhost:5000/api/buckets`
+        const path = `/api/buckets`
         const response = await axios.get(path)
         this.buckets = response.data.buckets.filter(bucket => bucket.bucket_type === 'Google Storage')
       } catch (error) {

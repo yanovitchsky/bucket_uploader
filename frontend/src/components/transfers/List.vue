@@ -58,7 +58,7 @@ export default {
       this.$router.push('/transfers/new')
     },
     getTransfers () {
-      const path = `http://localhost:5000/api/transfers`
+      const path = `/api/transfers`
       axios.get(path)
       .then(response => {
         this.transfers = response.data.transfers
@@ -69,11 +69,11 @@ export default {
     },
     async getStatus (id) {
       try {
-        const path = `http://localhost:5000/api/transfers/${id}/status`
-        reponse = await axios.get(path)
-        console.log(response.data);
+        const path = `/api/transfers/${id}/status`
+        const response = await axios.get(path)
+        console.log(response.data)
       } catch (error) {
-        console.log(error);
+        console.log(error)
       }
     }
   },

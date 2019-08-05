@@ -12,3 +12,5 @@ google-api-python-client
 boto3
 celery
 redis
+dnspython
+gunicorn==19.3.0

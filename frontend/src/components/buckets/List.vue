@@ -40,7 +40,7 @@ export default {
   },
   methods: {
     getBuckets () {
-      const path = `http://localhost:5000/api/buckets`
+      const path = `/api/buckets`
       axios.get(path)
       .then(response => {
         this.buckets = response.data.buckets
@@ -53,7 +53,7 @@ export default {
       this.$router.push('/buckets/new')
     },
     async deleteBucket (id) {
-      const path = `http://localhost:5000/api/buckets/${id}`
+      const path = `/api/buckets/${id}`
       try {
         await axios.delete(path)
         let newBuckets = this.buckets.filter(b => b.id !== id)
