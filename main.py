@@ -394,21 +394,21 @@ def local_file_upload(bucket_id, files):
     schedule=datetime.now(),
     type='LOCAL'
   )
-  new_pid = os.fork()
-  if new_pid == 0:
-    upload_to_google(files, bucket, tj)
-  os.waitpid(new_pid,0)
+  # new_pid = os.fork()
+  # if new_pid == 0:
+  upload_to_google(files, bucket, tj)
+  # os.waitpid(new_pid,0)
   return True
 
 @celery.task
 # @app.route('/queues/transfer', methods=['POST'])
 def transfer_job(source_id, sink_id, files):
-  new_pid = os.fork()
-  if new_pid == 0:
-    source = Bucket.objects(id=source_id).first()
-    sink = Bucket.objects(id=sink_id).first()
-    start_transfer(source, sink, files)
-  os.waitpid(new_pid,0)
+  # new_pid = os.fork()
+  # if new_pid == 0:
+  source = Bucket.objects(id=source_id).first()
+  sink = Bucket.objects(id=sink_id).first()
+  start_transfer(source, sink, files)
+  # os.waitpid(new_pid,0)
   return True
 
   if __name__ == "__main__":
