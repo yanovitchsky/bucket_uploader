@@ -202,7 +202,7 @@ def start_transfer(source, sink, files):
       credential_file.close()
       os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.abspath(credential_file_path)
       # print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-      storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1')
+      storagetransfer = googleapiclient.discovery.build('storagetransfer', 'v1', cache_discovery=False)
       print('before making transfer')
       transfer_job = make_aws_request(source, sink, sink.project_id, files, now) if source.bucket_type == 'Amazon S3' else make_google_request(source, sink, sink.project_id, files, now)
       result = storagetransfer.transferJobs().create(body=transfer_job).execute()
