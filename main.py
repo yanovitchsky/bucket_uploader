@@ -159,31 +159,22 @@ def make_google_request(source, sink, project_id, files, schedule_time):
   return transfer_job
 
 def upload_to_google(files, sink_bucket, transfer_job):
-  try:
-    credential_file_path = os.path.abspath(f'sink_credential_{sink_bucket.name}.json')
-    credential_file = open(credential_file_path, 'w')
-    credential_file.write(sink_bucket.credentials)
-    credential_file.close()
-    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
-    print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
-    client = storage.Client()
-    bucket = client.get_bucket(sink_bucket.name)
-    for file in files:
-      filename = file.split('/')[-1]
-      blob = bucket.blob(filename)
-      blob.upload_from_filename(filename=file)
-      os.remove(file)
-    os.remove(credential_file_path)
-    transfer_job.success = True
-    transfer_job.save()
-  except:
-    error = sys.exc_info()
-    e = error[0]
-    traceback = error[2]
-    print(f'error => {e}; {traceback}')
-    transfer_job.success = False
-    transfer_job.save()
-    # print(traceback)
+  credential_file_path = os.path.abspath(f'sink_credential_{sink_bucket.name}.json')
+  credential_file = open(credential_file_path, 'w')
+  credential_file.write(sink_bucket.credentials)
+  credential_file.close()
+  os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credential_file_path
+  print(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+  client = storage.Client()
+  bucket = client.get_bucket(sink_bucket.name)
+  for file in files:
+    filename = file.split('/')[-1]
+    blob = bucket.blob(filename)
+    blob.upload_from_filename(filename=file)
+    os.remove(file)
+  os.remove(credential_file_path)
+  transfer_job.success = True
+  transfer_job.save()
 
 def start_transfer(source, sink, files):
     now = datetime.now(timezone.utc) + timedelta(minutes = 1)
