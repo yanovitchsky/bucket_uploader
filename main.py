@@ -14,7 +14,7 @@ from werkzeug.utils import secure_filename
 from boto3.session import Session
 from bson import ObjectId
 from celery import Celery
-# from flask_htpasswd import HtPasswdAuth
+from flask_htpasswd import HtPasswdAuth
 
 
 def make_celery(app):
@@ -42,7 +42,7 @@ app.config.from_pyfile('config.py')
 db = MongoEngine(app)
 
 celery = make_celery(app)
-# htpasswd = HtPasswdAuth(app)
+htpasswd = HtPasswdAuth(app)
 
 # models
 BUCKET_TYPE = ('Amazon S3', 'Google Storage')
@@ -306,7 +306,7 @@ def transfer_bucket():
   source_id = params['sourceId']
   sink_id = params['sinkId']
   files = params['files']
-  transfer_job(source_id, sink_id, files)
+  transfer_job.delay(source_id, sink_id, files)
   return jsonify({"success": True})
 
 @app.route('/api/transfers/<transfer_id>/status', methods=['GET'])
@@ -345,7 +345,7 @@ def upload_file():
       file.save(name)
       file_list.append(name)
 
-    local_file_upload(bucket_id, file_list)
+    local_file_upload.delay(bucket_id, file_list)
     return jsonify({'success': True})
   else:
     return jsonify({'error': True}), 500
@@ -365,7 +365,7 @@ def not_found(error=None):
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 @htpasswd.required
-def catch_all(path):
+def catch_all(path, user):
   # if app.debug:
   #   return requests.get('http://localhost:8080/{}'.format(path)).text
   # else:
